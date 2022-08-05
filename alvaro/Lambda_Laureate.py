@@ -6,7 +6,9 @@ def lambda_handler(event, context):
 
     url = 'http://api.nobelprize.org/2.1/laureates?ID={}'
     
-    laureate_id = 5
+    
+    # #TODO Pasar parametro por API
+    laureate_id = event['queryStringParameters']['id']
     
     info_laureate = requests.get(url.format(laureate_id))
     
@@ -14,20 +16,20 @@ def lambda_handler(event, context):
     
     laureateDict=resultApi['laureates'][0]
     
-    laureateDict['id']
-    laureateDict['fullName']['en']
-    laureateDict['fileName']
-    laureateDict['gender']
-    laureateDict['birth']['date']
+    
+    
+    try:
+        fullName=laureateDict['fullName']['en']
+    except:
+        fullName=None
+    
     
     dfParquet=pd.DataFrame(columns=['id','fullName','fileName','gender','birth'])
-    
-    
     
     dfParquet=dfParquet.append({
     
         'id':laureateDict['id'],
-        'fullName':laureateDict['fullName']['en'],
+        'fullName': fullName,
         'fileName':laureateDict['fileName'],
         'gender':laureateDict['gender'],
         'birth':laureateDict['birth']['date']
@@ -36,13 +38,15 @@ def lambda_handler(event, context):
     
 
 
-
     s3=boto3.client('s3')
     
     content=dfParquet.to_parquet()
+    prueba=dfParquet.to_json()
     s3.put_object(Body=content, Bucket='alvaro-munoz-nobelprice', Key='raw/laureate/'+ str(laureate_id)  +'.parquet')
+
+
     
     return {
         'statusCode': 200,
-        'body': 'OK'
+        'body': prueba
     }
