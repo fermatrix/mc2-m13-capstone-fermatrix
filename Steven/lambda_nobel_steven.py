@@ -14,25 +14,24 @@ def lambda_handler(event, context):
     laureates_portion=[]
     resultApi=resultApi.json()
     resultDict=resultApi[0]
-
+    
     try:
         prueba2=resultDict['laureates']
         dateAwarded=resultDict['dateAwarded']
         for i in range(len(prueba2)):
             laureates_id.append(prueba2[i]['id'])
             laureates_portion.append(prueba2[i]['portion'])
-    print(arrId)
     except:
         laureates_id=None
         dateAwarded=None
         laureates_portion=None
-
-    dfNobelPrize = pd.DataFrame(columns=['awardYear','category','categoryFullName','dateAwarded','prizeAmount','prizeAmountAdjusted','id','portion'] )
-
-
+        
+    dfNobelPrize = pd.DataFrame(columns=['awardYear','category','categoryFullName','dateAwarded','prizeAmount','prizeAmountAdjusted','laureates_id','portion'] )
+    
+    
     dfNobelPrize=dfNobelPrize.append({
-
-                'id': laureates_id,
+    
+                'laureates_id': laureates_id,
                 'portion': laureates_portion,
                 'awardYear': resultDict['awardYear'],
                 'category': resultDict['category']['en'],
@@ -40,19 +39,17 @@ def lambda_handler(event, context):
                 'dateAwarded': dateAwarded,
                 'prizeAmount': resultDict['prizeAmount'],
                 'prizeAmountAdjusted': resultDict['prizeAmountAdjusted']
-
+                    
             }, ignore_index=True)
-
-    dfNobelPrize=dfNobelPrize.set_index('id')
-
-
-
+    
+    
     s3=boto3.client('s3')
-
+    
     content=dfNobelPrize.to_parquet()
     s3.put_object(Body=content, Bucket='alvaro-munoz-nobelprice', Key='raw/nobelPrize/'+ event_category +'-'+ str(event_year)  +'.parquet')
-
-  return {
-      'statusCode': 200,
-      'body': json.dumps(event)
-  }
+    
+        
+    return {
+        'statusCode': 200,
+        'body': 'ok'
+    }
